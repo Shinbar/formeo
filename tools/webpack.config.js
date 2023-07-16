@@ -3,15 +3,18 @@ const { BannerPlugin, DefinePlugin } = require('webpack')
 const autoprefixer = require('autoprefixer')
 const CompressionPlugin = require('compression-webpack-plugin')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-const CleanWebpackPlugin = require('clean-webpack-plugin')
+// const CleanWebpackPlugin = require('clean-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin')
 const { default: mi18n } = require('mi18n')
 const { languageFiles, enUS } = require('formeo-i18n')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin')
+// const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const TerserPlugin = require("terser-webpack-plugin");
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
+// const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { IS_PRODUCTION, ANALYZE, projectRoot, outputDir, devtool, bannerTemplate, version } = require('./build-vars')
 
 // hack for Ubuntu on Windows
@@ -31,14 +34,15 @@ const copyPatterns = [
 ]
 
 const plugins = [
-  new CleanWebpackPlugin(['dist/*', 'demo/*'], { root: projectRoot }),
+  // new CleanWebpackPlugin(['dist/*', 'demo/*'], { root: projectRoot }),
   new DefinePlugin({
     EN_US: JSON.stringify(enUS),
     'process.env': {
       production: JSON.stringify(process.env.NODE_ENV),
     },
+    'process.argv': JSON.stringify(process.argv),
   }),
-  new CopyWebpackPlugin(copyPatterns),
+  new CopyWebpackPlugin({ patterns: copyPatterns}),
   new HtmlWebpackPlugin({
     isProduction: IS_PRODUCTION,
     devPrefix: IS_PRODUCTION ? '' : 'dist/demo/',
@@ -59,16 +63,25 @@ const plugins = [
     version,
   }),
   new HtmlWebpackHarddiskPlugin({ outputPath: './demo/' }),
+  /*
   new MiniCssExtractPlugin({
     moduleFilename: ({ name }) => `${name.replace('/js/', '/css/')}.min.css`,
   }),
+  */
+  new MiniCssExtractPlugin(),
   new BannerPlugin(bannerTemplate),
   new CompressionPlugin({
-    asset: '[path].gz[query]',
+    // asset: '[path].gz[query]',
     algorithm: 'gzip',
     test: /\.(js)$/,
     threshold: 10240,
     minRatio: 0.8,
+  }),
+  new ESLintPlugin({
+    extensions: [`js`],
+    exclude: [
+      `/node_modules/`
+    ]
   }),
 ]
 
@@ -85,7 +98,7 @@ const extractTextLoader = !IS_PRODUCTION
   ? {
       loader: 'style-loader',
       options: {
-        sourceMap: !IS_PRODUCTION,
+        // sourceMap: !IS_PRODUCTION,
       },
     }
   : MiniCssExtractPlugin.loader
@@ -106,17 +119,30 @@ const webpackConfig = {
         test: /formeo-sprite\.svg$/,
         use: 'raw-loader',
       },
+      /*
       {
         enforce: 'pre',
         test: /\.js$/,
         exclude: /node_modules/,
         loader: 'eslint-loader',
       },
+      */
+      
       {
         test: /\.js$/,
         exclude: /node_modules/,
         loader: 'babel-loader',
       },
+      /*
+      {
+        test: /.s?css$/,
+        // use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"]
+        use [
+          extractTextLoader, 
+        ]
+      }
+      */
+      
       {
         test: /\.scss$/,
         use: [
@@ -124,35 +150,48 @@ const webpackConfig = {
           {
             loader: 'css-loader',
             options: {
-              camelCase: true,
-              minimize: true,
-              sourceMap: !IS_PRODUCTION,
+              // camelCase: true,
+              // minimize: true,
+              // sourceMap: !IS_PRODUCTION,
             },
           },
           {
             loader: 'postcss-loader',
             options: {
-              plugins: [
-                autoprefixer({
-                  browsers: ['> 1%'],
-                }),
-              ],
-              sourceMap: !IS_PRODUCTION,
+              postcssOptions: {
+                plugins: [
+                  autoprefixer({
+                    browsers: ['> 1%'],
+                  }),
+                ],
+              }
+              // sourceMap: !IS_PRODUCTION,
             },
           },
           {
             loader: 'sass-loader',
             options: {
-              sourceMap: !IS_PRODUCTION,
+              // sourceMap: !IS_PRODUCTION,
             },
           },
         ],
       },
+      
     ],
   },
   plugins,
   devtool,
   optimization: {
+    minimizer: [
+      `...`,
+      new CssMinimizerPlugin(),
+      new TerserPlugin({
+        test: /\.js(\?.*)?$/i,
+        exclude: /\node_modules/,
+      }),
+    ]
+
+    /*
     minimizer: [
       new UglifyJsPlugin({
         cache: true,
@@ -161,16 +200,30 @@ const webpackConfig = {
       }),
       new OptimizeCSSAssetsPlugin(),
     ],
+    */
   },
   resolve: {
     modules: [resolve(__dirname, 'src'), 'node_modules'],
     extensions: ['.js', '.scss'],
     symlinks: true,
+    fallback: {
+      "fs": false,
+      "tls": false,
+      "net": false,
+      "path": require.resolve('path-browserify'), // path-browserify
+      "zlib": false,
+      "http": false,
+      "https": false,
+      "stream": false,
+      "crypto": false,
+      "crypto-browserify": false
+  
+    }
   },
   devServer: {
-    inline: true,
-    contentBase: 'demo/',
-    noInfo: true,
+    // inline: true,
+    static: 'demo/',
+    // noInfo: true,
   },
 }
 

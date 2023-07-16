@@ -73,13 +73,14 @@ const inputConfigBase = ({ key, value, type = 'text', checked }) => {
   return config
 }
 
-const labelHelper = key => {
+const labelHelper = (key, bAllowUserDefinedKey) => {
   const labelText = i18n.get(key)
   if (labelText) {
     return labelText
   }
-  const splitKey = key.split('.')
-  return i18n.get(splitKey[splitKey.length - 1])
+  
+  const splitKey = key.split('.');
+  return bAllowUserDefinedKey ? (splitKey[splitKey.length - 1]) : i18n.get(splitKey[splitKey.length - 1]);
 }
 
 const ITEM_INPUT_TYPE_MAP = {
@@ -329,8 +330,11 @@ export default class EditPanelItem {
     const conditionChangeAction = ({ target }) => {
       const row = target.closest('.f-condition-row')
       const regex = new RegExp(`${target.className}(?:\\S?)+`, 'gm')
+      const validateTargetValueRegEx = new RegExp('\\s+', 'gm');
+      const validateTargetValue = target.value.replace(validateTargetValueRegEx, '_');
       row.className = row.className.replace(regex, '')
-      row.classList.add([target.className, target.value].filter(Boolean).join('-'))
+      // row.classList.add([target.className, target.value].filter(Boolean).join('-'))
+      row.classList.add([target.className, validateTargetValue].filter(Boolean).join('-'));
       const evtData = {
         dataPath,
         value: target.value,
@@ -430,7 +434,7 @@ export default class EditPanelItem {
     )
 
     inputTypeConfig.config = Object.assign({}, inputTypeConfig.config, {
-      label: this.panelName !== 'options' && labelHelper(labelKey),
+      label: this.panelName !== 'options' && labelHelper(labelKey, true),
       labelAfter: false,
     })
 

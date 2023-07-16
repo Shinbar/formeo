@@ -10,7 +10,8 @@ const outputDir = resolve(projectRoot, 'dist/')
 
 const bannerTemplate = [`${pkgName} - ${homepage}`, `Version: ${version}`, `Author: ${author}`].join('\n')
 
-const devtool = IS_PRODUCTION ? false : 'cheap-module-source-map'
+// const devtool = IS_PRODUCTION ? false : 'cheap-module-source-map'
+const devtool = IS_PRODUCTION ? 'source-map' : 'source-map';
 
 module.exports = {
   IS_PRODUCTION,

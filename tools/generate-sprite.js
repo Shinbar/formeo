@@ -28,18 +28,21 @@ function generateSprite() {
       transform: [
         {
           svgo: {
-            plugins: [
-              { cleanupAttrs: true },
-              { removeDimensions: true },
-              { removeTitle: true },
-              { removeUselessDefs: true },
-              { mergePaths: true },
-              { removeStyleElement: true },
-              { removeNonInheritableGroupAttrs: true },
-              {
-                removeAttrs: { attrs: '(stroke|fill|style|^font-*)' },
-              },
-            ],
+            plugins: [{
+              name: 'preset-default',
+              params: {
+                overrides: {
+                  cleanupAttrs: true,
+                  removeDimensions: true,
+                  removeTitle: true,
+                  removeUselessDefs: true,
+                  mergePaths: true,
+                  removeStyleElement: true,
+                  removeNonInheritableGroupAttrs: true, 
+                  removeAttrs: { attrs: '(stroke|fill|style|^font-*)'},
+                }
+              }
+            }],
           },
         },
       ],

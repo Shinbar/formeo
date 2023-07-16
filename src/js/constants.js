@@ -1,6 +1,6 @@
-import { name } from '../../package.json'
+import packageInformation from '../../package.json'
 
-export const PACKAGE_NAME = name
+export const PACKAGE_NAME = packageInformation.name;
 
 export const POLYFILLS = [
   { name: 'cssPreload', src: '//cdnjs.cloudflare.com/ajax/libs/loadCSS/2.0.1/cssrelpreload.min.js' },
